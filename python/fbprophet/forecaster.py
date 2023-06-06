@@ -219,21 +219,17 @@ class Prophet(object):
         reserved_names.extend([
             'ds', 'y', 'cap', 'floor', 'y_scaled', 'cap_scaled'])
         if name in reserved_names:
-            raise ValueError('Name "{}" is reserved.'.format(name))
+            raise ValueError(f'Name "{name}" is reserved.')
         if (check_holidays and self.holidays is not None and
                 name in self.holidays['holiday'].unique()):
-            raise ValueError(
-                'Name "{}" already used for a holiday.'.format(name))
+            raise ValueError(f'Name "{name}" already used for a holiday.')
         if (check_holidays and self.append_holidays is not None and
                 name in get_holiday_names(self.append_holidays)):
-            raise ValueError(
-                'Name "{}" is a holiday name in {}.'.format(name, self.append_holidays))
+            raise ValueError(f'Name "{name}" is a holiday name in {self.append_holidays}.')
         if check_seasonalities and name in self.seasonalities:
-            raise ValueError(
-                'Name "{}" already used for a seasonality.'.format(name))
+            raise ValueError(f'Name "{name}" already used for a seasonality.')
         if check_regressors and name in self.extra_regressors:
-            raise ValueError(
-                'Name "{}" already used for an added regressor.'.format(name))
+            raise ValueError(f'Name "{name}" already used for an added regressor.')
 
     def setup_dataframe(self, df, initialize_scales=False):
         """Prepare dataframe for fitting or predicting.
@@ -261,8 +257,7 @@ class Prophet(object):
             raise ValueError('Found NaN in column ds.')
         for name in self.extra_regressors:
             if name not in df:
-                raise ValueError(
-                    'Regressor "{}" missing from dataframe'.format(name))
+                raise ValueError(f'Regressor "{name}" missing from dataframe')
 
         df = df.sort_values('ds')
         df.reset_index(inplace=True, drop=True)
@@ -321,11 +316,7 @@ class Prophet(object):
             if n_vals < 2:
                 standardize = False
             if standardize == 'auto':
-                if set(df[name].unique()) == set([1, 0]):
-                    # Don't standardize binary variables.
-                    standardize = False
-                else:
-                    standardize = True
+                standardize = set(df[name].unique()) != {1, 0}
             if standardize:
                 mu = df[name].mean()
                 std = df[name].std()
@@ -342,16 +333,7 @@ class Prophet(object):
         2) We are generating a grid of them.
         3) The user prefers no changepoints be used.
         """
-        if self.changepoints is not None:
-            if len(self.changepoints) == 0:
-                pass
-            else:
-                too_low = min(self.changepoints) < self.history['ds'].min()
-                too_high = max(self.changepoints) > self.history['ds'].max()
-                if too_low or too_high:
-                    raise ValueError(
-                        'Changepoints must fall within training data.')
-        else:
+        if self.changepoints is None:
             # Place potential changepoints evenly through first
             # changepoint_range proportion of the history
             hist_size = np.floor(
@@ -359,8 +341,7 @@ class Prophet(object):
             if self.n_changepoints + 1 > hist_size:
                 self.n_changepoints = hist_size - 1
                 logger.info(
-                    'n_changepoints greater than number of observations.'
-                    'Using {}.'.format(self.n_changepoints)
+                    f'n_changepoints greater than number of observations.Using {self.n_changepoints}.'
                 )
             if self.n_changepoints > 0:
                 cp_indexes = (
@@ -374,6 +355,12 @@ class Prophet(object):
             else:
                 # set empty changepoints
                 self.changepoints = []
+        elif len(self.changepoints) != 0:
+            too_low = min(self.changepoints) < self.history['ds'].min()
+            too_high = max(self.changepoints) > self.history['ds'].max()
+            if too_low or too_high:
+                raise ValueError(
+                    'Changepoints must fall within training data.')
         if len(self.changepoints) > 0:
             self.changepoints_t = np.sort(np.array(
                 (self.changepoints - self.start) / self.t_scale))
@@ -424,10 +411,7 @@ class Prophet(object):
         pd.DataFrame with seasonality features.
         """
         features = cls.fourier_series(dates, period, series_order)
-        columns = [
-            '{}_delim_{}'.format(prefix, i + 1)
-            for i in range(features.shape[1])
-        ]
+        columns = [f'{prefix}_delim_{i + 1}' for i in range(features.shape[1])]
         return pd.DataFrame(features, columns=columns)
 
     def make_holiday_features(self, dates):
@@ -491,8 +475,8 @@ class Prophet(object):
                     row.holiday in prior_scales and prior_scales[row.holiday] != ps
             ):
                 raise ValueError(
-                    'Holiday {} does not have consistent prior scale '
-                    'specification.'.format(row.holiday))
+                    f'Holiday {row.holiday} does not have consistent prior scale specification.'
+                )
             if ps <= 0:
                 raise ValueError('Prior scale must be > 0')
             prior_scales[row.holiday] = ps
@@ -504,11 +488,7 @@ class Prophet(object):
                 except KeyError:
                     loc = None
 
-                key = '{}_delim_{}{}'.format(
-                    row.holiday,
-                    '+' if offset >= 0 else '-',
-                    abs(offset)
-                )
+                key = f"{row.holiday}_delim_{'+' if offset >= 0 else '-'}{abs(offset)}"
                 if loc is not None:
                     expanded_holidays[key][loc] = 1.
                 else:
@@ -687,7 +667,7 @@ class Prophet(object):
             modes[props['mode']].append(name)
 
         # Dummy to prevent empty X
-        if len(seasonal_features) == 0:
+        if not seasonal_features:
             seasonal_features.append(
                 pd.DataFrame({'zeros': np.zeros(df.shape[0])}))
             prior_scales.append(1.)
@@ -1078,9 +1058,9 @@ class Prophet(object):
         """
         if df is None:
             df = self.history.copy()
+        elif df.shape[0] == 0:
+            raise ValueError('Dataframe has no rows.')
         else:
-            if df.shape[0] == 0:
-                raise ValueError('Dataframe has no rows.')
             df = self.setup_dataframe(df.copy())
 
         df['trend'] = self.predict_trend(df)
@@ -1273,8 +1253,7 @@ class Prophet(object):
         posterior predictive samples for that component.
         """
         df = self.setup_dataframe(df.copy())
-        sim_values = self.sample_posterior_predictive(df)
-        return sim_values
+        return self.sample_posterior_predictive(df)
 
     def predict_uncertainty(self, df):
         """Prediction intervals for yhat and trend.
@@ -1294,10 +1273,12 @@ class Prophet(object):
 
         series = {}
         for key in ['yhat', 'trend']:
-            series['{}_lower'.format(key)] = np.nanpercentile(
-                sim_values[key], lower_p, axis=1)
-            series['{}_upper'.format(key)] = np.nanpercentile(
-                sim_values[key], upper_p, axis=1)
+            series[f'{key}_lower'] = np.nanpercentile(
+                sim_values[key], lower_p, axis=1
+            )
+            series[f'{key}_upper'] = np.nanpercentile(
+                sim_values[key], upper_p, axis=1
+            )
 
         return pd.DataFrame(series)
 

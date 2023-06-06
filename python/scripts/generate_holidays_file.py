@@ -25,8 +25,15 @@ def generate_holidays_file():
     years = np.arange(1995, 2045, 1)
     all_holidays = []
     # class names in holiday packages which are not countries
-    class_to_exclude = set(['rd', 'datetime', 'date', 'HolidayBase', 'Calendar',
-                            'LunarDate', 'timedelta', 'date'])
+    class_to_exclude = {
+        'rd',
+        'datetime',
+        'HolidayBase',
+        'Calendar',
+        'LunarDate',
+        'timedelta',
+        'date',
+    }
 
     class_list2 = inspect.getmembers(hdays_part2, inspect.isclass)
     country_set2 = set(list(zip(*class_list2))[0])

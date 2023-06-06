@@ -111,9 +111,11 @@ def plot_components(
     regressors = {'additive': False, 'multiplicative': False}
     for name, props in m.extra_regressors.items():
         regressors[props['mode']] = True
-    for mode in ['additive', 'multiplicative']:
-        if regressors[mode] and 'extra_regressors_{}'.format(mode) in fcst:
-            components.append('extra_regressors_{}'.format(mode))
+    components.extend(
+        f'extra_regressors_{mode}'
+        for mode in ['additive', 'multiplicative']
+        if regressors[mode] and f'extra_regressors_{mode}' in fcst
+    )
     npanel = len(components)
 
     figsize = figsize if figsize else (9, 3 * npanel)
@@ -401,8 +403,10 @@ def add_changepoints_to_plot(
     signif_changepoints = m.changepoints[
         np.abs(np.nanmean(m.params['delta'], axis=0)) >= threshold
     ]
-    for cp in signif_changepoints:
-        artists.append(ax.axvline(x=cp, c=cp_color, ls=cp_linestyle))
+    artists.extend(
+        ax.axvline(x=cp, c=cp_color, ls=cp_linestyle)
+        for cp in signif_changepoints
+    )
     return artists
 
 
@@ -478,6 +482,6 @@ def plot_cross_validation_metric(
     ax.plot(x_plt_h, df_h[metric], '-', c='b')
     ax.grid(True)
 
-    ax.set_xlabel('Horizon ({})'.format(dt_names[i]))
+    ax.set_xlabel(f'Horizon ({dt_names[i]})')
     ax.set_ylabel(metric)
     return fig

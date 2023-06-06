@@ -53,9 +53,9 @@ def generate_cutoffs(df, horizon, initial, period):
             'Less data than horizon after initial window. '
             'Make horizon or initial shorter.'
         )
-    logger.info('Making {} forecasts with cutoffs between {} and {}'.format(
-        len(result), result[-1], result[0]
-    ))
+    logger.info(
+        f'Making {len(result)} forecasts with cutoffs between {result[-1]} and {result[0]}'
+    )
     return reversed(result)
 
 
@@ -218,9 +218,7 @@ def performance_metrics(df, metrics=None, rolling_window=0.1):
     if len(set(metrics)) != len(metrics):
         raise ValueError('Input metrics must be a list of unique values')
     if not set(metrics).issubset(set(valid_metrics)):
-        raise ValueError(
-            'Valid values for metrics are: {}'.format(valid_metrics)
-        )
+        raise ValueError(f'Valid values for metrics are: {valid_metrics}')
     df_m = df.copy()
     df_m['horizon'] = df_m['ds'] - df_m['cutoff']
     df_m.sort_values('horizon', inplace=True)

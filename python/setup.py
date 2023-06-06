@@ -15,10 +15,7 @@ from setuptools.command.develop import develop
 from setuptools.command.test import test as test_command
 
 
-PLATFORM = 'unix'
-if platform.platform().startswith('Win'):
-    PLATFORM = 'win'
-
+PLATFORM = 'win' if platform.platform().startswith('Win') else 'unix'
 SETUP_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(SETUP_DIR, 'stan', PLATFORM)
 MODEL_TARGET_DIR = os.path.join('fbprophet', 'stan_model')
@@ -85,7 +82,7 @@ class TestCommand(test_command):
             sys.path.insert(0, normalize_path(ei_cmd.egg_base))
             working_set.__init__()
             add_activation_listener(lambda dist: dist.activate())
-            require('%s==%s' % (ei_cmd.egg_name, ei_cmd.egg_version))
+            require(f'{ei_cmd.egg_name}=={ei_cmd.egg_version}')
             func()
         finally:
             sys.path[:] = old_path

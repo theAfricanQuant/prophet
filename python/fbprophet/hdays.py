@@ -34,9 +34,7 @@ class Brazil(HolidayBase):
 
     def _populate(self, year):
         # New Year's Day
-        if not self.observed and date(year, 1, 1).weekday() in WEEKEND:
-            pass
-        else:
+        if self.observed or date(year, 1, 1).weekday() not in WEEKEND:
             self[date(year, 1, 1)] = "New Year's Day"
 
         # Tiradentes
@@ -83,9 +81,7 @@ class Indonesia(HolidayBase):
 
     def _populate(self, year):
         # New Year's Day
-        if not self.observed and date(year, 1, 1).weekday() in WEEKEND:
-            pass
-        else:
+        if self.observed or date(year, 1, 1).weekday() not in WEEKEND:
             self[date(year, 1, 1)] = "New Year's Day"
 
         # Chinese New Year/ Spring Festival
@@ -126,9 +122,6 @@ class Indonesia(HolidayBase):
             self[date(year, 3, 17)] = name
         elif year == 2019:
             self[date(year, 3, 7)] = name
-        else:
-            pass
-
         # Ascension of the Prophet
         name = "Ascension of the Prophet"
         for offset in range(-1, 2, 1):
@@ -305,9 +298,6 @@ class India(HolidayBase):
         elif year == 2025:
             self[date(year, 10, 21)] = name1
             self[date(year, 3, 14)] = name2
-        else:
-            pass
-
         # --------------------------------
         # Islamic holidays
         #     Day of Ashura
@@ -509,20 +499,14 @@ class Malaysia(HolidayBase):
             monthcal = c.monthdatescalendar(year, 6)
 
             l1 = len(monthcal)
-            saturdays = []
-            for i in range(l1):
-                if monthcal[i][5].month == 6:
-                    saturdays.append(monthcal[i][5])
+            saturdays = [monthcal[i][5] for i in range(l1) if monthcal[i][5].month == 6]
             self[saturdays[0]] = name
-        elif (year >= 2017) and (year <= 2021):
+        elif year <= 2021:
             c = Calendar(firstweekday=MONDAY)
             monthcal = c.monthdatescalendar(year, 7)
 
             l1 = len(monthcal)
-            saturdays = []
-            for i in range(l1):
-                if monthcal[i][5].month == 7:
-                    saturdays.append(monthcal[i][5])
+            saturdays = [monthcal[i][5] for i in range(l1) if monthcal[i][5].month == 7]
             self[saturdays[-1]] = name
 
         # Eid al-Fitr
@@ -665,9 +649,6 @@ class Thailand(HolidayBase):
             self[date(year, 3, 1)] = name
         elif year == 2019:
             self[date(year, 2, 19)] = name
-        else:
-            pass
-
         # Chakri Memorial Day
         name = "Chakri Memorial Day"
         april_6 = date(year, 4, 6).weekday()
@@ -749,9 +730,6 @@ class Thailand(HolidayBase):
             self[date(year, 7, 21)] = name
         elif year == 2025:
             self[date(year, 7, 10)] = name
-        else:
-            pass
-
         # Beginning of Vassa
         warning_msg = "We only support Vassa holiday from 2006 to 2020"
         warnings.warn(warning_msg, Warning)
@@ -786,9 +764,6 @@ class Thailand(HolidayBase):
             self[date(year, 7, 17)] = name
         elif year == 2020:
             self[date(year, 7, 6)] = name
-        else:
-            pass
-
         # The Queen Sirikit's Birthday
         name = "The Queen Sirikit's Birthday"
         self[date(year, 8, 12)] = name
